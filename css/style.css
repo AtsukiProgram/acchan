@@ -1,0 +1,289 @@
+/* 基本リセット */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'MS PGothic', 'Osaka', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    background-color: #ffffee;
+    color: #000000;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+/* ヘッダー */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #cccccc;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    color: #ff6600;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+header h1 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.create-thread-btn {
+    background-color: #ff6600;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.create-thread-btn:hover {
+    background-color: #e55a00;
+}
+
+/* スレッド一覧 */
+.thread-list {
+    border: 1px solid #cccccc;
+    background-color: white;
+}
+
+.thread-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eeeeee;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.thread-item:hover {
+    background-color: #f0f0f0;
+}
+
+.thread-info {
+    flex-grow: 1;
+}
+
+.thread-title {
+    color: #0000ee;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.thread-title-red {
+    color: #ff0000;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.thread-meta {
+    font-size: 10px;
+    color: #666666;
+    margin-top: 2px;
+}
+
+.thread-stats {
+    font-size: 10px;
+    color: #666666;
+}
+
+/* 投稿表示 */
+.posts-container {
+    background-color: white;
+    border: 1px solid #cccccc;
+    margin-bottom: 20px;
+}
+
+.post {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.post-header {
+    font-size: 11px;
+    color: #0000ee;
+    margin-bottom: 4px;
+}
+
+.post-content {
+    margin-bottom: 8px;
+    word-wrap: break-word;
+}
+
+.post-media {
+    margin-top: 8px;
+}
+
+.post-media img,
+.post-media video {
+    max-width: 200px;
+    max-height: 200px;
+    margin-right: 8px;
+    margin-bottom: 4px;
+}
+
+/* アンカーリンク */
+.anchor {
+    color: #0000ee;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.anchor:hover {
+    color: #ff0000;
+}
+
+/* 投稿フォーム */
+.post-form-container {
+    background-color: white;
+    border: 1px solid #cccccc;
+    padding: 15px;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #cccccc;
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.form-group textarea {
+    height: 80px;
+    resize: vertical;
+}
+
+.file-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.file-buttons button {
+    padding: 6px 12px;
+    background-color: #f0f0f0;
+    border: 1px solid #cccccc;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.file-buttons button:hover {
+    background-color: #e0e0e0;
+}
+
+#selectedFiles {
+    font-size: 10px;
+    color: #666666;
+}
+
+.post-form-container button[type="submit"] {
+    background-color: #ff6600;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.post-form-container button[type="submit"]:hover {
+    background-color: #e55a00;
+}
+
+/* モーダル */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #cccccc;
+    width: 80%;
+    max-width: 500px;
+}
+
+.close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
+
+.modal h2 {
+    margin-bottom: 15px;
+}
+
+.modal input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #cccccc;
+}
+
+.modal button {
+    background-color: #ff6600;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.modal button:hover {
+    background-color: #e55a00;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .container {
+        padding: 5px;
+    }
+    
+    .file-buttons {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+}
