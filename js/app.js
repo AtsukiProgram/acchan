@@ -4,30 +4,30 @@ const firebaseConfig = {
   authDomain: "acchan-77bca.firebaseapp.com",
   databaseURL: "https://acchan-77bca-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "acchan-77bca",
-  storageBucket: "acchan-77bca.firebasestorage.app",
+  storageBucket: "acchan-77bca.appspot.com",
   messagingSenderId: "958930816155",
   appId: "1:958930816155:web:daee73c617e23283caca3e"
 };
 
 // Firebaseの初期化
-// HTMLで読み込んだfirebaseオブジェクトを直接使います[1]
 firebase.initializeApp(firebaseConfig);
-const database = firebase.database(); // Realtime Databaseへの参照を取得[1]
+const database = firebase.database(); // Realtime Databaseへの参照
+const storage = firebase.storage();   // Firebase Storageへの参照
 
 // グローバル変数
 let deviceId = '';
 let currentThreadId = '';
 let deletionTimerId = null;
+let currentSelectedFiles = []; // 選択されたファイルを一時的に保持
 
 // アプリケーション初期化
 function initializeApp() {
     deviceId = getOrCreateDeviceId();
-    cleanupOldData(); // Firebaseデータベース上の古いデータもクリーンアップ
+    cleanupOldData();
     console.log('acchan初期化完了 - 端末ID:', deviceId);
 }
 
 // --- localStorage関連の関数（デバイスIDと名前の保存のみに使用） ---
-// デバイスIDはブラウザごとに一意に生成し、localStorageに保存
 function getOrCreateDeviceId() {
     let id = localStorage.getItem('acchan_device_id');
     if (!id) {
@@ -39,14 +39,12 @@ function getOrCreateDeviceId() {
     return id;
 }
 
-// 投稿者名をlocalStorageに保存
 function savePosterName(name) {
     if (name) {
         localStorage.setItem('acchan_poster_name', name);
     }
 }
 
-// 保存された投稿者名を読み込み、フォームに設定
 function loadPosterName() {
     const savedName = localStorage.getItem('acchan_poster_name');
     if (savedName) {
@@ -54,12 +52,10 @@ function loadPosterName() {
     }
 }
 
-
 // 古いデータの削除（Firebase版）
-// Firebaseデータベースから、終了条件を満たしたスレッドを削除
 function cleanupOldData() {
     const threadsRef = database.ref('threads');
-    threadsRef.once('value', (snapshot) => { // データ取得は一度きり
+    threadsRef.once('value', (snapshot) => {
         const now = new Date().getTime();
         snapshot.forEach((childSnapshot) => {
             const thread = childSnapshot.val();
@@ -68,9 +64,8 @@ function cleanupOldData() {
             const lastActivity = new Date(thread.lastActivity).getTime();
             const daysSinceActivity = (now - lastActivity) / (1000 * 60 * 60 * 24);
 
-            // 3週間無活動、または投稿数1000件でスレッドをクローズ状態にする
             if (daysSinceActivity > 21 || (thread.postCount && thread.postCount >= 1000)) {
-                if (!thread.closed) { // まだクローズされていなければ
+                if (!thread.closed) {
                     database.ref(`threads/${threadId}`).update({
                         closed: true,
                         closedAt: new Date().toISOString()
@@ -78,13 +73,21 @@ function cleanupOldData() {
                 }
             }
 
-            // クローズから1週間後に完全に削除
             if (thread.closed) {
                 const closedTime = new Date(thread.closedAt).getTime();
                 const daysSinceClosed = (now - closedTime) / (1000 * 60 * 60 * 24);
                 if (daysSinceClosed > 7) {
-                    database.ref(`threads/${threadId}`).remove(); // スレッド本体を削除[2]
-                    database.ref(`posts/${threadId}`).remove(); // スレッド内の投稿も削除[2]
+                    database.ref(`threads/${threadId}`).remove();
+                    database.ref(`posts/${threadId}`).remove();
+                    // スレッドに関連するStorageデータも削除
+                    const threadStorageRef = storage.ref(`media/${threadId}`);
+                    threadStorageRef.listAll().then(res => {
+                        res.items.forEach(itemRef => {
+                            itemRef.delete();
+                        });
+                    }).catch(error => {
+                        console.error("Error listing files in storage:", error);
+                    });
                 }
             }
         });
@@ -92,18 +95,16 @@ function cleanupOldData() {
 }
 
 // スレッド一覧の読み込み（Firebase版）
-// Firebaseからスレッドデータをリアルタイムに取得し表示
 function loadThreadList() {
     const threadsRef = database.ref('threads');
     const threadList = document.getElementById('threadList');
 
-    // 'value'イベントリスナーでデータの変更をリアルタイムに監視[2]
     threadsRef.orderByChild('lastActivity').on('value', (snapshot) => {
         let threads = [];
         snapshot.forEach((childSnapshot) => {
             threads.push({ id: childSnapshot.key, ...childSnapshot.val() });
         });
-        threads.reverse(); // lastActivityで並べ替え後、最新のものが上に来るように逆順にする
+        threads.reverse();
 
         if (threads.length === 0) {
             threadList.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">まだスレッドがありません。「+」ボタンで新しいスレッドを作成してください。</div>';
@@ -115,7 +116,6 @@ function loadThreadList() {
             const lastActivityDate = new Date(thread.lastActivity);
             const status = thread.closed ? '[終了]' : '';
             const isCreator = (thread.creatorId === deviceId);
-            // 削除ボタン（ゴミ箱の絵文字）
             const deleteButton = isCreator ? `<span class="thread-delete-btn" onclick="deleteThread('${thread.id}', event)">🗑️</span>` : '';
             
             return `
@@ -134,41 +134,47 @@ function loadThreadList() {
     });
 }
 
-
 // スレッド削除（Firebase版）
-// 指定されたスレッドとその投稿をFirebaseから削除[2]
 function deleteThread(threadId, event) {
     event.stopPropagation();
     if (!confirm('このスレッドを削除しますか？\n（この操作は元に戻せません）')) return;
 
-    database.ref(`threads/${threadId}`).remove(); // スレッド本体を削除
-    database.ref(`posts/${threadId}`).remove();   // そのスレッドの投稿も削除
+    database.ref(`threads/${threadId}`).remove();
+    database.ref(`posts/${threadId}`).remove();
+    
+    // スレッドに関連するStorageデータも削除
+    const threadStorageRef = storage.ref(`media/${threadId}`);
+    threadStorageRef.listAll().then(res => {
+        res.items.forEach(itemRef => {
+            itemRef.delete();
+        });
+    }).catch(error => {
+        console.error("Error listing files in storage for deletion:", error);
+    });
 }
 
 // スレッド作成（Firebase版）
-// 新しいスレッドをFirebaseに保存[2]
 function createThread() {
     const title = document.getElementById('threadTitle').value.trim();
     if (!title) return;
 
     const threadsRef = database.ref('threads');
-    const newThreadRef = threadsRef.push(); // ユニークなキーを自動生成[2]
+    const newThreadRef = threadsRef.push();
     
-    newThreadRef.set({ // データをセット[2]
+    newThreadRef.set({
         title: title,
         createdAt: new Date().toISOString(),
         lastActivity: new Date().toISOString(),
         postCount: 0,
         creatorId: deviceId,
         closed: false
-    }).then(() => { // データ保存成功時の処理
+    }).then(() => {
         hideCreateThreadModal();
-        openThread(newThreadRef.key); // 新しく生成されたスレッドIDでスレッドページへ遷移
+        openThread(newThreadRef.key);
     });
 }
 
 // スレッド読み込み（Firebase版）
-// スレッドページ表示時に、該当スレッドの情報をFirebaseから取得し表示
 function loadThread() {
     const params = new URLSearchParams(window.location.search);
     currentThreadId = params.get('id');
@@ -179,7 +185,7 @@ function loadThread() {
     }
 
     const threadRef = database.ref(`threads/${currentThreadId}`);
-    threadRef.on('value', (snapshot) => { // スレッド情報をリアルタイム監視
+    threadRef.on('value', (snapshot) => {
         const thread = snapshot.val();
         if (!thread) {
             alert('スレッドが見つからないか、削除されました。');
@@ -190,11 +196,11 @@ function loadThread() {
         document.getElementById('threadTitle').textContent = thread.title;
         document.title = `${thread.title} - acchan`;
 
-        handleDeletionWarning(thread); // 1000件警告の処理を更新
+        handleDeletionWarning(thread);
     });
 
-    loadPosts(); // 投稿を読み込む
-    loadPosterName(); // 保存された名前を読み込む
+    loadPosts();
+    loadPosterName();
 
     const postForm = document.getElementById('postForm');
     if (postForm) {
@@ -206,12 +212,11 @@ function loadThread() {
 }
 
 // 投稿読み込み（Firebase版）
-// スレッド内の投稿をFirebaseからリアルタイムに取得し表示
 function loadPosts() {
     const postsRef = database.ref(`posts/${currentThreadId}`);
     const container = document.getElementById('postsContainer');
 
-    postsRef.orderByChild('createdAt').on('value', (snapshot) => { // 投稿をリアルタイム監視
+    postsRef.orderByChild('createdAt').on('value', (snapshot) => {
         let posts = [];
         snapshot.forEach((childSnapshot) => {
             posts.push({ id: childSnapshot.key, ...childSnapshot.val() });
@@ -227,22 +232,34 @@ function loadPosts() {
             const postDate = new Date(post.createdAt);
             const isCreator = post.isCreator ? colorBlue('[スレ主]') : '';
             const name = post.name || '名前すらない淫夢';
-            let content = escapeHtml(post.content).replace(/\n/g, '<br>'); // 改行を<br>に変換
+            let content = escapeHtml(post.content).replace(/\n/g, '<br>');
             content = processAnchors(content);
 
+            // メディア表示部分を再実装
+            let mediaHtml = '';
+            if (post.media && Array.isArray(post.media) && post.media.length > 0) {
+                mediaHtml = '<div class="post-media">';
+                post.media.forEach(media => {
+                    if (media.type.startsWith('image/')) {
+                        mediaHtml += `<img src="${media.url}" alt="添付画像" style="max-width:200px; max-height:200px; margin-right:5px; margin-bottom:5px;">`;
+                    } else if (media.type.startsWith('video/')) {
+                        mediaHtml += `<video controls src="${media.url}" style="max-width:200px; max-height:200px; margin-right:5px; margin-bottom:5px;"></video>`;
+                    }
+                });
+                mediaHtml += '</div>';
+            }
+
             const headerHtml = `${colorGreen(postNumber + ':')} ${colorBlack(escapeHtml(name))} ${colorBlue('◆' + post.deviceId)} ${colorBlack(formatDateWithSecond(postDate))} ${isCreator}`;
-            
-            // 画像・動画の表示は今回省略
             
             return `
                 <div class="post" id="post${postNumber}">
                     <div class="post-header">${headerHtml}</div>
                     <div class="post-content">${content}</div>
+                    ${mediaHtml}
                 </div>
             `;
         }).join('');
 
-        // 投稿が追加されたら、自動で最新の投稿までスクロール
         setTimeout(() => {
             const lastPost = container.querySelector('.post:last-child');
             if (lastPost) {
@@ -253,78 +270,96 @@ function loadPosts() {
 }
 
 // 投稿送信（Firebase版）
-// 新しい投稿をFirebaseに保存し、スレッド情報も更新[2]
-function submitPost() {
+async function submitPost() { // asyncキーワードを追加
     const name = document.getElementById('posterName').value.trim();
-    savePosterName(name); // 名前をlocalStorageに保存
+    savePosterName(name);
 
     const content = document.getElementById('postContent').value.trim();
-    if (!content) {
-        alert('内容を入力してください');
+    const files = currentSelectedFiles; // ここからファイルを取得
+
+    if (!content && files.length === 0) { // 投稿内容かファイルがないと送信できない
+        alert('内容を入力するか、画像/動画を選択してください');
         return;
     }
     
     const threadRef = database.ref(`threads/${currentThreadId}`);
-    threadRef.once('value').then((snapshot) => { // スレッド情報を一度取得
-        const thread = snapshot.val();
-        if (!thread) {
-            alert('エラー: スレッドが見つかりません。');
-            return;
+    const threadSnapshot = await threadRef.once('value'); // awaitでPromiseの解決を待つ
+    const thread = threadSnapshot.val();
+
+    if (!thread) {
+        alert('エラー: スレッドが見つかりません。');
+        return;
+    }
+    if (thread.closed) {
+        alert('このスレッドは終了しています');
+        return;
+    }
+
+    // ファイルをStorageにアップロード
+    const uploadedMedia = [];
+    for (const file of files) {
+        try {
+            const mediaRef = storage.ref(`media/${currentThreadId}/${Date.now()}-${file.name}`);
+            const snapshot = await mediaRef.put(file);
+            const downloadURL = await snapshot.ref.getDownloadURL();
+            uploadedMedia.push({
+                url: downloadURL,
+                type: file.type,
+                name: file.name
+            });
+        } catch (error) {
+            console.error("ファイルアップロードエラー:", error);
+            alert("ファイルのアップロードに失敗しました。");
+            return; // 失敗したら投稿を中止
         }
-        if (thread.closed) {
-            alert('このスレッドは終了しています');
-            return;
-        }
+    }
 
-        const postsRef = database.ref(`posts/${currentThreadId}`);
-        postsRef.push({ // 新しい投稿をプッシュ[2]
-            name: name,
-            content: content,
-            deviceId: deviceId,
-            createdAt: new Date().toISOString(),
-            isCreator: thread.creatorId === deviceId,
-        });
-
-        // スレッドの投稿数と最終更新日時を更新
-        const newPostCount = (thread.postCount || 0) + 1;
-        const updates = {
-            lastActivity: new Date().toISOString(),
-            postCount: newPostCount
-        };
-
-        // 投稿数が1000件に達したらスレッドをクローズ
-        if (newPostCount >= 1000) {
-            updates.closed = true;
-            updates.closedAt = new Date().toISOString();
-        }
-        
-        threadRef.update(updates); // スレッド情報を更新[2]
-
-        // フォームをリセットし、保存された名前を再設定
-        document.getElementById('postForm').reset();
-        document.getElementById('postContent').value = ''; // 内容だけクリア
-        loadPosterName(); // 名前は保存されたものを再表示
+    const postsRef = database.ref(`posts/${currentThreadId}`);
+    postsRef.push({
+        name: name,
+        content: content,
+        deviceId: deviceId,
+        createdAt: new Date().toISOString(),
+        isCreator: thread.creatorId === deviceId,
+        media: uploadedMedia // アップロードされたメディアの情報を追加
     });
+
+    const newPostCount = (thread.postCount || 0) + 1;
+    const updates = {
+        lastActivity: new Date().toISOString(),
+        postCount: newPostCount
+    };
+
+    if (newPostCount >= 1000) {
+        updates.closed = true;
+        updates.closedAt = new Date().toISOString();
+    }
+    
+    threadRef.update(updates);
+
+    // フォームと選択ファイルのクリア
+    document.getElementById('postForm').reset();
+    document.getElementById('postContent').value = '';
+    currentSelectedFiles = []; // 選択ファイルをクリア
+    updateSelectedFilesDisplay(); // 表示を更新
+    loadPosterName(); // 名前は保存されたものを再表示
 }
 
 // 1000件警告処理
-// スレッドが1000件に達した際の警告メッセージと削除までのカウントダウンを管理
 function handleDeletionWarning(thread) {
     const warningEl = document.getElementById('deletionWarning');
-    if (deletionTimerId) clearInterval(deletionTimerId); // 既存のタイマーがあればクリア
+    if (deletionTimerId) clearInterval(deletionTimerId);
 
     if (thread.closed && thread.postCount >= 1000 && thread.closedAt) {
-        const deletionTime = new Date(new Date(thread.closedAt).getTime() + 7 * 24 * 60 * 60 * 1000); // クローズから7日後
+        const deletionTime = new Date(new Date(thread.closedAt).getTime() + 7 * 24 * 60 * 60 * 1000);
         function updateWarning() {
             const now = new Date();
-            let diff = deletionTime - now; // 残り時間（ミリ秒）
-            if (diff <= 0) { // 削除日時を過ぎたら
+            let diff = deletionTime - now;
+            if (diff <= 0) {
                 warningEl.textContent = 'このスレッドは完全に削除されました。';
                 clearInterval(deletionTimerId);
-                // 必要であれば、スレッドリストに戻るなどの処理を追加
                 return;
             }
-            // 残り時間を日、時間、分、秒に変換
             const d = Math.floor(diff / (86400000));
             diff -= d * 86400000;
             const h = Math.floor(diff / (3600000));
@@ -334,15 +369,86 @@ function handleDeletionWarning(thread) {
             const s = Math.floor(diff / 1000);
             warningEl.textContent = `このスレッドは1000を超えました。\nこのスレッドは残り、${d}日${h}時間${m}分${s}秒で完全に削除されます。`;
         }
-        updateWarning(); // 初回表示をすぐに実行
-        deletionTimerId = setInterval(updateWarning, 1000); // 1秒ごとに更新
+        updateWarning();
+        deletionTimerId = setInterval(updateWarning, 1000);
     } else {
-        warningEl.textContent = ''; // 警告条件を満たさない場合はメッセージを非表示
+        warningEl.textContent = '';
     }
 }
 
 
-// --- 以下の関数はUI/ユーティリティ関連で、Firebaseとは直接関係ありません ---
+// --- ファイル選択・デバイス判定関連 ---
+
+// デバイスがモバイルかどうかを判定する関数[1]
+function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// ファイル選択ボタンをデバイスに応じて更新する関数[1]
+function updateFileSelectionButtons() {
+    const fileButtonsContainer = document.querySelector('.file-buttons');
+    if (!fileButtonsContainer) return;
+
+    fileButtonsContainer.innerHTML = ''; // 既存のボタンをクリア
+
+    if (isMobile()) {
+        // スマホ: 写真を撮る, 写真を選択, ファイルを選択
+        fileButtonsContainer.innerHTML = `
+            <button type="button" onclick="selectFiles('camera')">写真を撮る</button>
+            <button type="button" onclick="selectFiles('gallery')">写真を選択</button>
+            <button type="button" onclick="selectFiles('file')">ファイルを選択</button>
+        `;
+    } else {
+        // PC: 写真を撮る, ファイルを選択
+        fileButtonsContainer.innerHTML = `
+            <button type="button" onclick="selectFiles('camera')">写真を撮る</button>
+            <button type="button" onclick="selectFiles('file')">ファイルを選択</button>
+        `;
+    }
+}
+
+// ファイル選択処理
+function selectFiles(type) {
+    const input = document.getElementById('mediaFiles');
+    
+    // input要素の属性をリセット
+    input.removeAttribute('capture');
+    input.removeAttribute('accept');
+
+    if (type === 'camera') {
+        input.setAttribute('capture', 'camera');
+        input.setAttribute('accept', 'image/*,video/*'); // 写真も動画も撮れるように
+    } else if (type === 'gallery') {
+        input.setAttribute('accept', 'image/*'); // 写真のみ
+    } else { // type === 'file'
+        input.setAttribute('accept', 'image/*,video/*'); // 画像も動画も選択可
+    }
+    
+    input.click(); // 隠されたファイル入力フィールドをクリック
+
+    input.onchange = function(event) {
+        currentSelectedFiles = []; // 選択ファイルをリセット
+        const files = event.target.files;
+        for (let i = 0; i < Math.min(files.length, 5); i++) { // 最大5つまで
+            currentSelectedFiles.push(files[i]);
+        }
+        updateSelectedFilesDisplay(); // 選択されたファイルの名前を表示
+    };
+}
+
+// 選択ファイル表示更新
+function updateSelectedFilesDisplay() {
+    const container = document.getElementById('selectedFiles');
+    if (currentSelectedFiles.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    const fileList = currentSelectedFiles.map(file => file.name).join(', ');
+    container.innerHTML = `選択中: ${fileList}`;
+}
+
+
+// --- UI/ユーティリティ関連 ---
 
 // スレッド作成モーダル表示
 function showCreateThreadModal() {

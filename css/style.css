@@ -131,9 +131,9 @@ header h1 a {
     align-items: center;
     margin-left: 10px; /* スレッド情報との間隔 */
 }
-.thread-delete-btn:hover {
-    opacity: 0.7; /* ホバー時に少し薄くする */
-}
+/* .thread-delete-btn:hover {
+    opacity: 0.7; ホバー時に少し薄くする - 絵文字の場合見えにくくなるので削除
+} */
 
 /* 投稿表示 */
 .posts-container {
@@ -226,7 +226,7 @@ header h1 a {
 }
 
 .file-buttons {
-    display: flex;
+    display: flex; /* 追加: ボタンを横並びにする */
     gap: 8px;
     margin-bottom: 8px;
 }
