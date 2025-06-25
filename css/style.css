@@ -29,6 +29,24 @@ header {
     margin-bottom: 20px;
 }
 
+/* 【追加】スレッドページのヘッダー専用スタイル */
+.page-thread header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px; /* acchanとスレッドタイトルの間の余白 */
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* 【追加】区切り線用のスタイル */
+.header-divider {
+    border: none;
+    border-top: 1px solid #cccccc;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
 header h1 {
     color: #ff6600;
     font-size: 24px;
@@ -102,6 +120,21 @@ header h1 a {
     color: #666666;
 }
 
+/* 【追加】スレッド削除ボタン（縦向き・・・） */
+.thread-delete-btn {
+    cursor: pointer;
+    font-size: 20px;
+    padding: 0 8px;
+    user-select: none;
+    color: #666666;
+    display: flex;
+    align-items: center;
+    margin-left: 10px; /* スレッド情報との間隔 */
+}
+.thread-delete-btn:hover {
+    color: #ff0000;
+}
+
 /* 投稿表示 */
 .posts-container {
     background-color: white;
@@ -116,9 +149,14 @@ header h1 a {
 
 .post-header {
     font-size: 11px;
-    color: #0000ee;
+    /* color: #0000ee; ※色分けするのでデフォルトの文字色は不要 */
     margin-bottom: 4px;
 }
+
+/* 【追加】投稿ヘッダーの色分け */
+.color-green { color: green; }
+.color-black { color: black; }
+.color-blue { color: blue; }
 
 .post-content {
     margin-bottom: 8px;
@@ -146,6 +184,14 @@ header h1 a {
 
 .anchor:hover {
     color: #ff0000;
+}
+
+/* 【追加】1000件オーバー時の警告メッセージ */
+.deletion-warning {
+    color: red;
+    font-weight: bold;
+    margin-top: 5px;
+    white-space: pre-wrap; /* 改行を反映させる */
 }
 
 /* 投稿フォーム */

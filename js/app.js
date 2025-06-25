@@ -1,6 +1,7 @@
 // グローバル変数
 let deviceId = '';
 let currentThreadId = '';
+let deletionTimerId = null; // 削除タイマーのIDを保持
 
 // アプリケーション初期化
 function initializeApp() {
@@ -78,23 +79,46 @@ function loadThreadList() {
         const lastActivityDate = new Date(thread.lastActivity);
         const status = thread.closed ? '[終了]' : '';
         
+        // 自分が作成したスレッドか判定
+        const isCreator = (thread.creatorId === deviceId);
+        
+        // 【変更】削除ボタン（ゴミ箱の絵文字）表示HTML
+        const deleteButton = isCreator ? `<span class="thread-delete-btn" onclick="deleteThread('${thread.id}', event)">🗑️</span>` : '';
+        
         return `
-            <div class="thread-item" onclick="${thread.closed ? '' : `openThread('${thread.id}')`}" 
-                 style="${thread.closed ? 'opacity: 0.6; cursor: default;' : ''}">
-                <div class="thread-info">
+            <div class="thread-item" style="${thread.closed ? 'opacity: 0.6; cursor: default;' : ''}">
+                <div class="thread-info" onclick="${thread.closed ? '' : `openThread('${thread.id}')`}">
                     <div class="thread-title">${status}${escapeHtml(thread.title)}</div>
                     <div class="thread-meta">
-                        作成: ${formatDate(createdDate)} | 
-                        最終更新: ${formatDate(lastActivityDate)}
+                        作成: ${formatDate(createdDate)} | 最終更新: ${formatDate(lastActivityDate)}
                     </div>
                 </div>
                 <div class="thread-stats">
                     ${thread.postCount}件
                 </div>
+                ${deleteButton}
             </div>
         `;
     }).join('');
 }
+
+// スレッド削除関数
+function deleteThread(threadId, event) {
+    event.stopPropagation(); // 親のクリックイベント（スレッドを開く）を止める
+    if (!confirm('このスレッドを削除しますか？\n（この操作は元に戻せません）')) return;
+    
+    // スレッド一覧から削除
+    let threads = JSON.parse(localStorage.getItem('acchan_threads') || '[]');
+    threads = threads.filter(t => t.id !== threadId);
+    localStorage.setItem('acchan_threads', JSON.stringify(threads));
+    
+    // 投稿も削除
+    localStorage.removeItem(`acchan_posts_${threadId}`);
+    
+    // 再描画
+    loadThreadList();
+}
+
 
 // スレッド作成モーダル表示
 function showCreateThreadModal() {
@@ -168,7 +192,7 @@ function loadThread() {
     document.getElementById('threadTitle').textContent = thread.title;
     document.title = `${thread.title} - acchan`;
     
-    loadPosts();
+    loadPosts(); // 初回ロード
     
     // 投稿フォームイベント
     const postForm = document.getElementById('postForm');
@@ -178,6 +202,44 @@ function loadThread() {
             submitPost();
         });
     }
+
+    // 1秒ごとに投稿一覧を自動更新するタイマー
+    // 他の人の投稿をリアルタイムで見ることはできません。
+    setInterval(loadPosts, 1000); 
+
+    // 1000件到達時の警告とカウントダウン
+    const warningEl = document.getElementById('deletionWarning');
+    if (deletionTimerId) clearInterval(deletionTimerId); // 既存タイマーをクリア
+
+    if (thread.closed && thread.postCount >= 1000 && thread.closedAt) {
+        const deletionTime = new Date(new Date(thread.closedAt).getTime() + 7 * 24 * 60 * 60 * 1000); // 終了日時 + 7日
+
+        function updateWarning() {
+            const now = new Date();
+            let diff = deletionTime - now;
+
+            if (diff <= 0) {
+                warningEl.textContent = 'このスレッドは完全に削除されました。';
+                clearInterval(deletionTimerId);
+                // ページをリロードしてスレッドリストに戻るなど、適切な処理を追加することも可能
+                return;
+            }
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            diff -= days * (1000 * 60 * 60 * 24);
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            diff -= hours * (1000 * 60 * 60);
+            const minutes = Math.floor(diff / (1000 * 60));
+            diff -= minutes * (1000 * 60);
+            const seconds = Math.floor(diff / 1000);
+
+            warningEl.textContent = `このスレッドは1000を超えました。\nこのスレッドは残り、${days}日${hours}時間${minutes}分${seconds}秒で完全に削除されます。`;
+        }
+
+        updateWarning(); // 初回表示
+        deletionTimerId = setInterval(updateWarning, 1000); // 1秒ごとに更新
+    } else {
+        warningEl.textContent = ''; // 警告がない場合はクリア
+    }
 }
 
 // 投稿読み込み
@@ -185,6 +247,12 @@ function loadPosts() {
     const posts = JSON.parse(localStorage.getItem(`acchan_posts_${currentThreadId}`) || '[]');
     const container = document.getElementById('postsContainer');
     
+    // 【最適化】投稿数が変わらない場合はDOM更新をスキップ
+    const currentPostElements = container.querySelectorAll('.post');
+    if (posts.length === currentPostElements.length && posts.length > 0) {
+        return;
+    }
+
     if (posts.length === 0) {
         container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">まだ投稿がありません。最初の投稿をしてみましょう！</div>';
         return;
@@ -193,10 +261,11 @@ function loadPosts() {
     container.innerHTML = posts.map((post, index) => {
         const postNumber = index + 1;
         const postDate = new Date(post.createdAt);
-        const isCreator = post.isCreator ? ' [スレ主]' : '';
+        const isCreator = post.isCreator ? colorBlue('[スレ主]') : ''; // 色分けを適用
         const name = post.name || '名前すらない淫夢';
         
-        let content = escapeHtml(post.content);
+        // 改行を<br>に変換
+        let content = escapeHtml(post.content).replace(/\n/g, '<br>');
         content = processAnchors(content);
         
         let mediaHtml = '';
@@ -212,10 +281,19 @@ function loadPosts() {
                 }).join('') + '</div>';
         }
         
+        // 投稿ヘッダーの表示フォーマット
+        const headerHtml = `
+            ${colorGreen(postNumber + ':')}
+            ${colorBlack(escapeHtml(name))} 
+            ${colorBlue('◆' + post.deviceId)} 
+            ${colorBlack(formatDateWithSecond(postDate))} 
+            ${isCreator}
+        `;
+
         return `
             <div class="post" id="post${postNumber}">
                 <div class="post-header">
-                    ${postNumber}:${escapeHtml(name)} ◆${post.deviceId} ${formatDateWithDay(postDate)}${isCreator}
+                    ${headerHtml}
                 </div>
                 <div class="post-content">${content}</div>
                 ${mediaHtml}
@@ -361,7 +439,7 @@ function updateSelectedFiles() {
 
 // アンカー処理
 function processAnchors(content) {
-    return content.replace(/>>(\\d+)/g, '<span class="anchor" onclick="scrollToPost($1)">>>$1</span>');
+    return content.replace(/>>(\d+)/g, '<span class="anchor" onclick="scrollToPost($1)">>>$1</span>');
 }
 
 // 投稿へスクロール
@@ -391,11 +469,18 @@ function formatDate(date) {
     return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-function formatDateWithDay(date) {
+// 秒数まで表示するフォーマット関数
+function formatDateWithSecond(date) {
     const days = ['日', '月', '火', '水', '木', '金', '土'];
     const day = days[date.getDay()];
-    return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}(${day}) ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}(${day}) ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
 }
+
+// 色分けユーティリティ関数
+function colorGreen(text) { return `<span class="color-green">${text}</span>`; }
+function colorBlack(text) { return `<span class="color-black">${text}</span>`; }
+function colorBlue(text) { return `<span class="color-blue">${text}</span>`; }
+
 
 // モーダル外クリックで閉じる
 window.addEventListener('click', function(event) {
