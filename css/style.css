@@ -29,7 +29,7 @@ header {
     margin-bottom: 20px;
 }
 
-/* 【追加】スレッドページのヘッダー専用スタイル */
+/* スレッドページのヘッダー専用スタイル */
 .page-thread header {
     flex-direction: column;
     align-items: flex-start;
@@ -39,7 +39,7 @@ header {
     padding-bottom: 0;
 }
 
-/* 【追加】区切り線用のスタイル */
+/* 区切り線用のスタイル */
 .header-divider {
     border: none;
     border-top: 1px solid #cccccc;
@@ -120,7 +120,7 @@ header h1 a {
     color: #666666;
 }
 
-/* 【追加】スレッド削除ボタン（縦向き・・・） */
+/* スレッド削除ボタン（ゴミ箱） */
 .thread-delete-btn {
     cursor: pointer;
     font-size: 20px;
@@ -132,7 +132,7 @@ header h1 a {
     margin-left: 10px; /* スレッド情報との間隔 */
 }
 .thread-delete-btn:hover {
-    color: #ff0000;
+    opacity: 0.7; /* ホバー時に少し薄くする */
 }
 
 /* 投稿表示 */
@@ -153,7 +153,7 @@ header h1 a {
     margin-bottom: 4px;
 }
 
-/* 【追加】投稿ヘッダーの色分け */
+/* 投稿ヘッダーの色分け */
 .color-green { color: green; }
 .color-black { color: black; }
 .color-blue { color: blue; }
@@ -186,7 +186,7 @@ header h1 a {
     color: #ff0000;
 }
 
-/* 【追加】1000件オーバー時の警告メッセージ */
+/* 1000件オーバー時の警告メッセージ */
 .deletion-warning {
     color: red;
     font-weight: bold;
