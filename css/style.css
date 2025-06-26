@@ -129,11 +129,8 @@ header h1 a {
     color: #666666;
     display: flex;
     align-items: center;
-    margin-left: 10px; /* スレッド情報との間隔 */
+    margin-left: 10px;
 }
-/* .thread-delete-btn:hover {
-    opacity: 0.7; ホバー時に少し薄くする - 絵文字の場合見えにくくなるので削除
-} */
 
 /* 投稿表示 */
 .posts-container {
@@ -149,7 +146,6 @@ header h1 a {
 
 .post-header {
     font-size: 11px;
-    /* color: #0000ee; ※色分けするのでデフォルトの文字色は不要 */
     margin-bottom: 4px;
 }
 
@@ -163,17 +159,7 @@ header h1 a {
     word-wrap: break-word;
 }
 
-.post-media {
-    margin-top: 8px;
-}
-
-.post-media img,
-.post-media video {
-    max-width: 200px;
-    max-height: 200px;
-    margin-right: 8px;
-    margin-bottom: 4px;
-}
+/* .post-media のスタイルは不要なので削除 */
 
 /* アンカーリンク */
 .anchor {
@@ -191,7 +177,7 @@ header h1 a {
     color: red;
     font-weight: bold;
     margin-top: 5px;
-    white-space: pre-wrap; /* 改行を反映させる */
+    white-space: pre-wrap;
 }
 
 /* 投稿フォーム */
@@ -225,28 +211,7 @@ header h1 a {
     resize: vertical;
 }
 
-.file-buttons {
-    display: flex; /* 追加: ボタンを横並びにする */
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.file-buttons button {
-    padding: 6px 12px;
-    background-color: #f0f0f0;
-    border: 1px solid #cccccc;
-    cursor: pointer;
-    font-size: 11px;
-}
-
-.file-buttons button:hover {
-    background-color: #e0e0e0;
-}
-
-#selectedFiles {
-    font-size: 10px;
-    color: #666666;
-}
+/* .file-buttons, #selectedFiles のスタイルは不要なので削除 */
 
 .post-form-container button[type="submit"] {
     background-color: #ff6600;
@@ -322,10 +287,6 @@ header h1 a {
 @media (max-width: 768px) {
     .container {
         padding: 5px;
-    }
-    
-    .file-buttons {
-        flex-direction: column;
     }
     
     .modal-content {
