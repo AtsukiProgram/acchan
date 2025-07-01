@@ -45,7 +45,6 @@ header {
 
 .page-thread header { flex-direction:column; align-items:flex-start; border-bottom:none; margin-bottom:0; padding-bottom:0; }
 .header-divider { border:none; border-top:1px solid #ccc; margin:10px 0 20px; }
-
 .deletion-warning { color:red; font-weight:bold; white-space:pre-wrap; }
 
 .anchor { color:#00f; text-decoration:underline; cursor:pointer; }
