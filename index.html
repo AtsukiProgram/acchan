@@ -1,48 +1,74 @@
+
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>acchan - 匿名掲示板</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>acchan - 匿名掲示板</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>acchan</h1>
-            <button class="create-thread-btn" onclick="showCreateThreadModal()">+</button>
-        </header>
+  <meta name="google-site-verification" content="WRUPSCZGi00FQ_e7oEOXr3T8asTtiJ4eSlO_VTO-efU" /><!DOCTYPE html>
+  <div class="container">
+    <header>
+      <h1>acchan</h1>
+      <div class="header-btns">
+        <button id="accountBtn" style="display:none" onclick="openAccountModal()">アカウント</button>
+        <button id="loginBtn" onclick="openLoginModal()">ログイン</button>
+        <button class="create-thread-btn" onclick="showCreateThreadModal()">+</button>
+      </div>
+    </header>
 
-        <main>
-            <div class="thread-list" id="threadList">
-                <!-- スレッド一覧がここに表示される -->
-            </div>
-        </main>
+    <main>
+      <div class="thread-list" id="threadList">
+        <!-- スレッド一覧表示 -->
+      </div>
+    </main>
 
-        <!-- スレッド作成モーダル -->
-        <div class="modal" id="createThreadModal">
-            <div class="modal-content">
-                <span class="close" onclick="hideCreateThreadModal()">&times;</span>
-                <h2>新しいスレッドを作成</h2>
-                <form id="createThreadForm">
-                    <input type="text" id="threadTitle" placeholder="スレッドタイトル（最大50文字）" maxlength="50" required>
-                    <button type="submit">スレッドを作成</button>
-                </form>
-            </div>
-        </div>
+    <!-- スレッド作成モーダル -->
+    <div class="modal" id="createThreadModal">
+      <div class="modal-content">
+        <span class="close" onclick="hideCreateThreadModal()">&times;</span>
+        <h2>新しいスレッドを作成</h2>
+        <form id="createThreadForm">
+          <input type="text" id="threadTitle" placeholder="スレッドタイトル（最大50文字）" maxlength="50" required>
+          <button type="submit">作成</button>
+        </form>
+      </div>
     </div>
+  </div>
 
-    <!-- Firebaseライブラリを追加 -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <!-- StorageのSDKは不要なので削除 -->
-    <script src="js/app.js"></script>
-    <script>
-        // ページ読み込み時の初期化
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-            loadThreadList();
-        });
-    </script>
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeLoginModal()">&times;</span>
+      <h2>ログイン</h2>
+      <input id="loginEmail" type="email" placeholder="メールアドレス:" required><br>
+      <input id="loginPass"  type="password" placeholder="パスワード:" required><br>
+      <button onclick="loginWithEmail()">ログイン</button>
+    </div>
+  </div>
+
+  <!-- Account Modal -->
+  <div id="accountModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeAccountModal()">&times;</span>
+      <h2>アカウント統計</h2>
+      <div id="statsArea">読み込み中...</div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeApp();
+      loadThreadList();
+    });
+  </script>
 </body>
 </html>
