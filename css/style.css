@@ -3,18 +3,18 @@
 body { font-family:'MS PGothic','Osaka',monospace; font-size:12px; background:#ffffee; color:#000; }
 .container { max-width:1000px; margin:0 auto; padding:10px; }
 
-/* ヘッダー */
-header { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #ccc; padding-bottom:10px; margin-bottom:20px; }
+header {
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid #ccc; padding-bottom:10px; margin-bottom:20px;
+}
 .header-btns button { margin-left:8px; }
 .create-thread-btn { background:#f60; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:3px; }
 .create-thread-btn:hover { background:#e55a00; }
 
-/* モーダル */
 .modal { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
 .modal-content { background:#fff; margin:10% auto; padding:20px; width:80%; max-width:400px; position:relative; }
 .modal-content .close { position:absolute; top:8px; right:12px; cursor:pointer; font-size:24px; }
 
-/* スレッド一覧 */
 .thread-list { border:1px solid #ccc; background:#fff; }
 .thread-item { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid #eee; cursor:pointer; }
 .thread-item:hover { background:#f0f0f0; }
@@ -22,27 +22,20 @@ header { display:flex; align-items:center; justify-content:space-between; border
 .thread-title { color:#00f; font-weight:bold; text-decoration:underline; }
 .thread-title-red { color:#f00; font-size:18px; font-weight:bold; }
 .thread-meta, .thread-stats { font-size:10px; color:#666; }
-
-/* スレッド削除アイコン */
 .thread-delete-btn { cursor:pointer; font-size:20px; padding:0 8px; color:#666; }
 .thread-delete-btn:hover { color:#f00; }
 
-/* 投稿表示 */
 .posts-container { background:#fff; border:1px solid #ccc; margin-bottom:20px; }
 .post { display:flex; justify-content:space-between; align-items:flex-start; padding:8px 12px; border-bottom:1px solid #eee; }
 .post-body { flex-grow:1; }
 .post-header { font-size:11px; margin-bottom:4px; }
 .post-content { word-wrap:break-word; margin-bottom:8px; }
-
-/* 投稿削除アイコン */
 .post-delete-icon { cursor:pointer; font-size:16px; margin-left:10px; color:#999; }
 .post-delete-icon:hover { color:#f00; }
 
-/* バッジ */
-.badge-vip { color:#d4af37; font-weight:bold; margin-right:4px; }
-.badge-admin { color:#f00; font-weight:bold; margin-right:4px; }
+.badge-vip   { color:#d4af37; font-weight:bold; margin-right:4px; }
+.badge-admin { color:#f00;     font-weight:bold; margin-right:4px; }
 
-/* フォーム */
 .post-form-container { background:#fff; border:1px solid #ccc; padding:15px; }
 .form-group { margin-bottom:10px; }
 .form-group label { display:block; font-weight:bold; margin-bottom:3px; }
@@ -50,13 +43,10 @@ header { display:flex; align-items:center; justify-content:space-between; border
 .post-form-container button[type=submit] { background:#f60; color:#fff; border:none; padding:8px 16px; cursor:pointer; font-weight:bold; }
 .post-form-container button[type=submit]:hover { background:#e55a00; }
 
-/* スレッドページヘッダー */
 .page-thread header { flex-direction:column; align-items:flex-start; border-bottom:none; margin-bottom:0; padding-bottom:0; }
 .header-divider { border:none; border-top:1px solid #ccc; margin:10px 0 20px; }
 
-/* 警告 */
 .deletion-warning { color:red; font-weight:bold; white-space:pre-wrap; }
 
-/* アンカーリンク (安価) */
 .anchor { color:#00f; text-decoration:underline; cursor:pointer; }
 .anchor:hover { color:#f00; }

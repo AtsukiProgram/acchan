@@ -1,33 +1,30 @@
-
 <!-- index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>acchan - 匿名掲示板</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <meta name="google-site-verification" content="WRUPSCZGi00FQ_e7oEOXr3T8asTtiJ4eSlO_VTO-efU" /><!DOCTYPE html>
   <div class="container">
     <header>
       <h1>acchan</h1>
       <div class="header-btns">
         <button id="accountBtn" style="display:none" onclick="openAccountModal()">アカウント</button>
         <button id="loginBtn" onclick="openLoginModal()">ログイン</button>
+        <button id="registerBtn" onclick="openRegisterModal()">新規登録</button>
         <button class="create-thread-btn" onclick="showCreateThreadModal()">+</button>
       </div>
     </header>
 
     <main>
-      <div class="thread-list" id="threadList">
-        <!-- スレッド一覧表示 -->
-      </div>
+      <div class="thread-list" id="threadList"></div>
     </main>
 
     <!-- スレッド作成モーダル -->
-    <div class="modal" id="createThreadModal">
+    <div id="createThreadModal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="hideCreateThreadModal()">&times;</span>
         <h2>新しいスレッドを作成</h2>
@@ -47,6 +44,17 @@
       <input id="loginEmail" type="email" placeholder="メールアドレス:" required><br>
       <input id="loginPass"  type="password" placeholder="パスワード:" required><br>
       <button onclick="loginWithEmail()">ログイン</button>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div id="registerModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeRegisterModal()">&times;</span>
+      <h2>新規登録</h2>
+      <input id="regEmail" type="email" placeholder="メールアドレス:" required><br>
+      <input id="regPass"  type="password" placeholder="パスワード(6文字以上):" required><br>
+      <button onclick="registerWithEmail()">登録</button>
     </div>
   </div>
 
